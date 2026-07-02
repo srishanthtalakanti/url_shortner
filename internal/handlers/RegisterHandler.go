@@ -1,26 +1,20 @@
-package auth
+package handlers
 
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
-	"url_shortner/internal/db"
 	"url_shortner/internal/jwt"
 	"url_shortner/internal/models"
 	"url_shortner/internal/utils"
 )
 
-func RegisterHandler(w http.ResponseWriter, req *http.Request) {
+func (h *DB) RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	//get the credentials
-	conn, err := db.ConnectDb()
-	if err != nil {
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode("Error connecting to database")
-		return
-	}
-	defer conn.Close(context.Background())
+
 	user_credentials := models.Credentials{}
-	err = json.NewDecoder(req.Body).Decode(&user_credentials)
+	err := json.NewDecoder(req.Body).Decode(&user_credentials)
 	if err != nil {
 		w.WriteHeader(400)
 		json.NewEncoder(w).Encode("Invalid/Empty credentials")
@@ -29,23 +23,24 @@ func RegisterHandler(w http.ResponseWriter, req *http.Request) {
 	hashedPass, err := utils.HashPassword(user_credentials.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("Internal Server Error")
+		json.NewEncoder(w).Encode("Yoo")
 		return
 	}
 	//insert into users table and get the user_id
 	var user_id int
-	err = conn.QueryRow(context.Background(), "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING user_id", user_credentials.Email, hashedPass).Scan(&user_id)
+	err = h.Pool.QueryRow(context.Background(), "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING user_id", user_credentials.Email, hashedPass).Scan(&user_id)
 	if err != nil {
 		//what status code?
 		w.WriteHeader(500)
-		json.NewEncoder(w).Encode(err)
+		log.Println(err)
+		json.NewEncoder(w).Encode("	Internal Server Error")
 		return
 	}
 	//get the jwt
 	jwt_token, err := jwt.Sign(user_id)
 	if err != nil {
-		//what status code
 		w.WriteHeader(500)
+		json.NewEncoder(w).Encode("Internal Server Error")
 		return
 	}
 	w.WriteHeader(200)

@@ -2,11 +2,11 @@ package services
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"url_shortner/internal/utils"
 )
 
-func GetShortUrl(url string, conn *pgx.Conn, user_id int) (string, error) {
+func GetShortUrl(url string, conn *pgxpool.Pool, user_id int) (string, error) {
 	//check if already exists if exsits return the short url
 	var short_url string
 	var err error

@@ -2,10 +2,10 @@ package services
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetLongUrl(id string, conn *pgx.Conn) (string, error) {
+func GetLongUrl(id string, conn *pgxpool.Pool) (string, error) {
 	var long_url string
 	var err error
 	err = conn.QueryRow(context.Background(), "SELECT long_url FROM urls WHERE short_code=$1", id).Scan(&long_url)

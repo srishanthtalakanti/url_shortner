@@ -1,4 +1,4 @@
-package auth
+package handlers
 
 import (
 	"context"
@@ -6,22 +6,14 @@ import (
 	"errors"
 	"github.com/jackc/pgx/v5"
 	"net/http"
-	"url_shortner/internal/db"
 	"url_shortner/internal/jwt"
 	"url_shortner/internal/models"
 	"url_shortner/internal/utils"
 )
 
-func LoginHandler(w http.ResponseWriter, req *http.Request) {
-	conn, err := db.ConnectDb()
-	if err != nil {
-		w.WriteHeader(500)
-		json.NewEncoder(w).Encode("Error connecting to database")
-		return
-	}
-	defer conn.Close(context.Background())
+func (h *DB) LoginHandler(w http.ResponseWriter, req *http.Request) {
 	user_credentials := models.Credentials{}
-	err = json.NewDecoder(req.Body).Decode(&user_credentials)
+	err := json.NewDecoder(req.Body).Decode(&user_credentials)
 	if err != nil {
 		w.WriteHeader(400)
 		json.NewEncoder(w).Encode(err)
@@ -29,6 +21,7 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	var hashedPass string
 	var user_id int
+	conn := h.Pool
 	err = conn.QueryRow(context.Background(), "SELECT password,user_id FROM users WHERE email=$1", user_credentials.Email).Scan(&hashedPass, &user_id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		w.WriteHeader(400)
