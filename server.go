@@ -170,9 +170,15 @@ func registerHandler(w http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(w).Encode("Invalid/Empty credentials")
 		return
 	}
+	hashedPass, err := utils.HashPassword(user_credentials.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("Internal Server Error")
+		return
+	}
 	//insert into users table and get the user_id
 	var user_id int
-	err = conn.QueryRow(context.Background(), "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING user_id", user_credentials.Email, user_credentials.Password).Scan(&user_id)
+	err = conn.QueryRow(context.Background(), "INSERT INTO users (email,password) VALUES ($1,$2) RETURNING user_id", user_credentials.Email, hashedPass).Scan(&user_id)
 	if err != nil {
 		//what status code?
 		w.WriteHeader(500)
@@ -206,11 +212,18 @@ func loginHandler(w http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(w).Encode(err)
 		return
 	}
+	var hashedPass string
 	var user_id int
-	err = conn.QueryRow(context.Background(), "SELECT user_id FROM users WHERE email=$1 AND password=$2", user_credentials.Email, user_credentials.Password).Scan(&user_id)
+	err = conn.QueryRow(context.Background(), "SELECT password,user_id FROM users WHERE email=$1", user_credentials.Email).Scan(&hashedPass, &user_id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		w.WriteHeader(400)
 		json.NewEncoder(w).Encode("Email/Password is not correct")
+		return
+	}
+	err = utils.VerifyPassword(hashedPass, user_credentials.Password)
+	if err != nil {
+		w.WriteHeader(401)
+		json.NewEncoder(w).Encode("Invalid Password")
 		return
 	}
 	jwt_token, err := jwt.Sign(user_id)
