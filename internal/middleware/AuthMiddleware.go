@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"url_shortner/jwt"
+	"url_shortner/internal/jwt"
 )
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
