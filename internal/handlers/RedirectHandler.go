@@ -10,7 +10,7 @@ import (
 func (h *DB) RedirectHandler(w http.ResponseWriter, req *http.Request) {
 	id := strings.TrimPrefix(req.URL.Path, "/")
 	//get the url from the query
-	res, err := services.GetLongUrl(id, h.Pool) //has the short url now get the long url
+	res, err := services.GetLongUrl(id, h.Pool, h.Client) //has the short url now get the long url
 	//handle the error case
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")

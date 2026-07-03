@@ -3,24 +3,31 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 	"url_shortner/internal/db"
 	"url_shortner/internal/handlers"
 	"url_shortner/internal/middleware"
+	"url_shortner/internal/redis"
 )
 
 func main() {
 	pool, err := db.Config()
+	client := redis.NewRedisClient()
 	if err != nil {
 		log.Fatalf("Cant create pool")
 	}
-	h := handlers.DB{
-		Pool: pool,
+	handler := &handlers.DB{
+		Pool:   pool,
+		Client: client,
 	}
-	http.HandleFunc("/register", h.RegisterHandler)
-	http.HandleFunc("/login", h.LoginHandler)
-	http.HandleFunc("/", middleware.AuthMiddleware(h.UrlHandler))
+	rl := &middleware.RateLimit{
+		RedisClient: client,
+		Limit:       10,
+		Duration:    60 * time.Second,
+	}
+	http.HandleFunc("/register", handler.RegisterHandler)
+	http.HandleFunc("/login", handler.LoginHandler)
+	http.HandleFunc("/", middleware.AuthMiddleware(rl.RateLimiter(handler.UrlHandler)))
 
 	http.ListenAndServe(":8080", nil)
 }
-
-//close the connections,dereferencing a nill pointer

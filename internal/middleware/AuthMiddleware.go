@@ -16,7 +16,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 		cliams, err := jwt.ValidateToken(cookie.Value)
 		if err != nil {
-			w.WriteHeader(http.StatusNetworkAuthenticationRequired)
+			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode("Unauthenticated User")
 			return
 		}

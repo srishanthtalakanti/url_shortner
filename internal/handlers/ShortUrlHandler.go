@@ -17,7 +17,7 @@ func (h *DB) ShortUrlHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	url := body.URL
 	conn := h.Pool
-	res, err := services.GetShortUrl(url, conn, req.Context().Value("user_id").(int))
+	res, err := services.GetShortUrl(url, conn, h.Client, req.Context().Value("user_id").(int))
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(500)
