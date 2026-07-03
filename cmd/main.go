@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"url_shortner/internal/config"
 	"url_shortner/internal/db"
 	"url_shortner/internal/handlers"
 	"url_shortner/internal/middleware"
@@ -15,6 +16,9 @@ func main() {
 	client := redis.NewRedisClient()
 	if err != nil {
 		log.Fatalf("Cant create pool")
+	}
+	if err := config.Validate(); err != nil {
+		log.Fatal(err)
 	}
 	handler := &handlers.DB{
 		Pool:   pool,

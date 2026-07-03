@@ -4,30 +4,22 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
 	"os"
 	"time"
 )
 
 func Config() (*pgxpool.Pool, error) {
-	host := os.Getenv("host")
-	port := os.Getenv("port")
-	user := os.Getenv("user")
-	password := os.Getenv("password")
-	dbname := os.Getenv("dbname")
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
 
-	psqlInfo := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
-		user, password, host, port, dbname,
-	)
-	config, err := pgxpool.ParseConfig(psqlInfo)
-	config.MinConns = 5
-	config.MaxConns = 25
-
-	config.MaxConnLifetime = 1 * time.Hour
+	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		log.Println("Cant create a pool", err)
 		return nil, err
 	}
-	return pgxpool.NewWithConfig(context.Background(), config)
+	cfg.MinConns = 5
+	cfg.MaxConns = 25
+	cfg.MaxConnLifetime = time.Hour
+
+	return pgxpool.NewWithConfig(context.Background(), cfg)
 }

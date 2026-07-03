@@ -18,7 +18,6 @@ func (h *DB) RedirectHandler(w http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(w).Encode(err)
 
 	} else {
-		w.WriteHeader(http.StatusPermanentRedirect)
 		http.Redirect(w, req, res, http.StatusPermanentRedirect)
 		//status code -> redirect 301
 		//return the res(set the headers,status code,etc)
